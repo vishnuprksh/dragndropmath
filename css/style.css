@@ -1,0 +1,105 @@
+body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+
+#toolbox {
+    border: 1px solid black;
+    padding: 10px;
+    margin-bottom: 20px;
+    width: 150px;
+    text-align: center;
+}
+
+#canvas {
+    border: 1px solid black;
+    width: 80%;
+    height: 400px;
+    position: relative; /* Needed for jsPlumb absolute positioning */
+    margin-bottom: 20px;
+}
+
+#result-area {
+    border: 1px solid black;
+    padding: 10px;
+    width: 80%;
+    text-align: center;
+}
+
+#workspace {
+    background-color: #f4f7f6; /* Light background for contrast */
+    background-image: radial-gradient(#cbd5e1 1px, transparent 1px); /* Subtle grid */
+    background-size: 20px 20px;
+    height: 100%; /* Ensure it fills the flex item height */
+    width: 100%;
+    position: relative; /* Required for jsPlumb positioning */
+}
+
+.node {
+    border: 1px solid blue;
+    background-color: lightblue;
+    padding: 10px;
+    margin: 5px;
+    cursor: move;
+    display: inline-block; /* For toolbox */
+    text-align: center;
+    position: absolute; /* For canvas */
+    min-width: 50px;
+    z-index: 10; /* Ensure nodes are above connectors */
+}
+
+/* Add specific styles for different node types */
+.node-vector {
+    border-color: #3b82f6; /* Tailwind blue-500 */
+    border-width: 2px;
+}
+
+.node-operation {
+    background-color: lightcoral;
+    border-radius: 50%; /* Make operations circular */
+    border-color: #10b981; /* Tailwind green-500 */
+    border-width: 2px;
+}
+
+.node-input {
+    background-color: lightgreen;
+}
+
+/* jsPlumb styles */
+.jtk-endpoint {
+    z-index: 11; /* Ensure endpoints are clickable above nodes */
+    cursor: crosshair;
+}
+
+.jtk-connector path {
+    stroke: gray;
+    stroke-width: 2;
+}
+
+.jtk-connector .jtk-overlay {
+    background-color: white;
+    padding: 2px;
+    z-index: 11; /* Ensure overlays (like labels) are above everything */
+}
+
+/* Styles for nodes being dragged */
+.dragging {
+    opacity: 0.7;
+    border: 2px dashed blue;
+}
+
+/* Styles for input fields within nodes */
+.node input[type="number"] {
+    width: 50px;
+    margin-top: 5px;
+}
+
+/* Selected node styling */
+.node-selected {
+    box-shadow: 0 0 0 2px #3b82f6, 0 0 8px 2px rgba(59, 130, 246, 0.5);
+    z-index: 20; /* Ensure selected node is on top */
+}
