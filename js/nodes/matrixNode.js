@@ -87,14 +87,17 @@ function createMatrixTableHTML(nodeId, matrixData) {
 
 // Set up event listeners for matrix table cells
 function setupMatrixEvents(nodeElement, nodeId) {
-    // Event delegation for matrix cell editing
-    nodeElement.addEventListener('dblclick', (event) => {
+    // Event delegation for matrix cell editing (single click instead of double click)
+    nodeElement.addEventListener('click', (event) => {
         const cell = event.target.closest('.matrix-cell');
         if (!cell) return;
         
         // Check if node is connected to an input
         const node = nodes[nodeId];
         if (!node || Object.keys(node.inputs).length > 0) return;
+        
+        // Only proceed if the cell isn't already being edited
+        if (!cell.readOnly) return;
         
         cell.readOnly = false;
         cell.classList.add('bg-white', 'border-purple-400');

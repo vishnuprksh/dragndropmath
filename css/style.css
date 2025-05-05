@@ -137,19 +137,19 @@ body {
     border-color: #10b981;
 }
 
-/* Excel-like table styles for vector and matrix nodes */
-.vector-table, .matrix-table {
+/* Excel-like table styles for scalar, vector and matrix nodes */
+.scalar-table, .vector-table, .matrix-table {
     border-collapse: collapse;
     width: 100%;
     background: white;
 }
 
-.vector-table td, .matrix-table td {
+.scalar-table td, .vector-table td, .matrix-table td {
     border: 1px solid #e2e8f0;
     padding: 0;
 }
 
-.vector-cell, .matrix-cell {
+.scalar-cell, .vector-cell, .matrix-cell {
     width: 100%;
     height: 100%;
     padding: 5px;
@@ -160,25 +160,25 @@ body {
     background: transparent;
 }
 
-.vector-cell:hover, .matrix-cell:hover {
+.scalar-cell:hover, .vector-cell:hover, .matrix-cell:hover {
     background-color: #f8fafc;
 }
 
-.vector-cell:focus, .matrix-cell:focus {
+.scalar-cell:focus, .vector-cell:focus, .matrix-cell:focus {
     background-color: white;
     box-shadow: inset 0 0 0 2px #3b82f6;
 }
 
-.vector-cell.border-green-400, .matrix-cell.border-purple-400 {
+.scalar-cell.border-blue-400, .vector-cell.border-green-400, .matrix-cell.border-purple-400 {
     box-shadow: inset 0 0 0 2px;
 }
 
-.vector-cell.border-red-500, .matrix-cell.border-red-500 {
+.scalar-cell.border-red-500, .vector-cell.border-red-500, .matrix-cell.border-red-500 {
     box-shadow: inset 0 0 0 2px #ef4444;
 }
 
 /* Make node size appropriate for tables */
-.node-vector, .node-matrix {
+.node-scalar, .node-vector, .node-matrix {
     min-width: 120px;
 }
 

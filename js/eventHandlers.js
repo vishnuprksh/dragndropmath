@@ -116,6 +116,14 @@ export function setupEventListeners(instance) {
         }
     };
 
+    // Handle scalar cell editing events
+    window.handleScalarCellBlur = function(input) {
+        if (!input.readOnly) {
+            const nodeId = input.dataset.nodeid;
+            updateScalarCell(input, nodeId);
+        }
+    };
+
     // Handle vector cell editing events
     window.handleVectorCellBlur = function(input) {
         if (!input.readOnly) {
@@ -132,7 +140,7 @@ export function setupEventListeners(instance) {
         }
     };
 
-    // Handle cell keydown events (for both vector and matrix)
+    // Handle cell keydown events (for all cell types)
     window.handleCellKeydown = function(event, input) {
         if (input.readOnly) return;
         
@@ -142,6 +150,8 @@ export function setupEventListeners(instance) {
                 updateVectorCell(input, input.dataset.nodeid);
             } else if (input.classList.contains('matrix-cell')) {
                 updateMatrixCell(input, input.dataset.nodeid);
+            } else if (input.classList.contains('scalar-cell')) {
+                updateScalarCell(input, input.dataset.nodeid);
             }
             input.blur();
         } else if (event.key === 'Escape') {
@@ -157,10 +167,12 @@ export function setupEventListeners(instance) {
                 const row = parseInt(input.dataset.row);
                 const col = parseInt(input.dataset.col);
                 input.value = node.value[row][col];
+            } else if (input.classList.contains('scalar-cell')) {
+                input.value = node.value.toString();
             }
             
             input.readOnly = true;
-            input.classList.remove('bg-white', 'border-green-400', 'border-purple-400');
+            input.classList.remove('bg-white', 'border-green-400', 'border-purple-400', 'border-blue-400');
             input.blur();
         }
     };
@@ -439,8 +451,19 @@ function saveNodeChanges(instance) {
             if (node.value !== newValue) {
                 node.value = newValue;
                 node.element.dataset.value = valueStr;
-                const displayElement = node.element.querySelector('.node-value-display');
-                displayElement.value = valueStr;
+                
+                // Fix: Use the correct selector for scalar nodes
+                const scalarCell = node.element.querySelector('.scalar-cell');
+                if (scalarCell) {
+                    scalarCell.value = valueStr;
+                } else {
+                    // Fallback to node-value-display if it exists
+                    const displayElement = node.element.querySelector('.node-value-display');
+                    if (displayElement) {
+                        displayElement.value = valueStr;
+                    }
+                }
+                
                 node.error = false;
                 console.log(`Scalar node ${editingNodeId} value set to`, newValue);
                 evaluateGraph();
@@ -642,6 +665,19 @@ export function updateNodeValue(inputElement) {
             if (node.value !== newValue) {
                 node.value = newValue;
                 node.element.dataset.value = valueStr;
+                
+                // Fix: Use the correct selector for scalar nodes
+                const scalarCell = node.element.querySelector('.scalar-cell');
+                if (scalarCell) {
+                    scalarCell.value = valueStr;
+                } else {
+                    // Fallback to node-value-display if it exists
+                    const displayElement = node.element.querySelector('.node-value-display');
+                    if (displayElement) {
+                        displayElement.value = valueStr;
+                    }
+                }
+                
                 node.error = false;
                 console.log(`Scalar node ${nodeId} value set to`, newValue);
                 evaluateGraph();

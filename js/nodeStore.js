@@ -2,6 +2,7 @@
 // Import the update display functions from vector and matrix nodes
 import { updateVectorNodeDisplay } from './nodes/vectorNode.js';
 import { updateMatrixNodeDisplay } from './nodes/matrixNode.js';
+import { updateScalarNodeDisplay } from './nodes/scalarNode.js';
 
 export let nodes = {}; // Store data for all nodes (vectors and operations)
 export let nodeCounter = 0;
@@ -58,26 +59,8 @@ export function updateNodeDisplay(nodeId) {
     try {
         // Use appropriate display method based on node type
         if (node.type === 'scalar') {
-            // Handle scalar values using the existing input element
-            const inputElement = node.element.querySelector('.node-value-display');
-            if (inputElement) {
-                inputElement.value = (typeof displayValue === 'number') 
-                    ? displayValue.toString() 
-                    : String(displayValue);
-                
-                inputElement.readOnly = true;
-                
-                if (hasInputConnection) {
-                    inputElement.classList.add('bg-gray-50');
-                    inputElement.classList.remove('bg-white', 'border-blue-400');
-                }
-                
-                if (node.error) {
-                    inputElement.classList.add('border-red-500');
-                } else {
-                    inputElement.classList.remove('border-red-500');
-                }
-            }
+            // Use the new table display for scalars
+            updateScalarNodeDisplay(nodeId, displayValue);
         } else if (node.type === 'vector') {
             // Use the new table display for vectors
             updateVectorNodeDisplay(nodeId, displayValue);

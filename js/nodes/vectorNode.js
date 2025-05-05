@@ -83,8 +83,8 @@ function createVectorTableHTML(nodeId, vectorData) {
 
 // Set up event listeners for vector table cells
 function setupVectorEvents(nodeElement, nodeId) {
-    // Event delegation for vector cell editing
-    nodeElement.addEventListener('dblclick', (event) => {
+    // Event delegation for vector cell editing (single click instead of double click)
+    nodeElement.addEventListener('click', (event) => {
         const cell = event.target.closest('.vector-cell');
         if (!cell) return;
         
@@ -92,39 +92,13 @@ function setupVectorEvents(nodeElement, nodeId) {
         const node = nodes[nodeId];
         if (!node || Object.keys(node.inputs).length > 0) return;
         
+        // Only proceed if the cell isn't already being edited
+        if (!cell.readOnly) return;
+        
         cell.readOnly = false;
         cell.classList.add('bg-white', 'border-green-400');
         cell.focus();
         cell.select();
-    });
-    
-    // Handle blur event to save changes
-    nodeElement.addEventListener('blur', (event) => {
-        const cell = event.target.closest('.vector-cell');
-        if (!cell || cell.readOnly) return;
-        
-        updateVectorCell(cell, nodeId);
-    }, true); // Use capture phase
-    
-    // Handle keydown events
-    nodeElement.addEventListener('keydown', (event) => {
-        const cell = event.target.closest('.vector-cell');
-        if (!cell || cell.readOnly) return;
-        
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            updateVectorCell(cell, nodeId);
-            cell.blur();
-        } else if (event.key === 'Escape') {
-            event.preventDefault();
-            // Reset to original value
-            const node = nodes[nodeId];
-            const index = parseInt(cell.dataset.index);
-            cell.value = node.value[index];
-            cell.readOnly = true;
-            cell.classList.remove('bg-white', 'border-green-400');
-            cell.blur();
-        }
     });
     
     // Handle resize button click
