@@ -8,9 +8,9 @@ import { evaluateGraph } from '../calculator.js';
 
 // Define operations by type
 const operationGroups = {
-    scalar: ['+', '-', '*', '/', 'pow'],
-    vector: ['+', '-', '*', '/', 'cross', 'dot'],
-    matrix: ['+', '-', '*', 'matmul', 'det', 'transpose']
+    scalar: ['+', '-', '*', '/', 'pow', 'scale-vec', 'scale-mat'],
+    vector: ['+', '-', '*', '/', 'cross', 'dot', 'scale-vec'],
+    matrix: ['+', '-', '*', 'matmul', 'det', 'transpose', 'scale-mat']
 };
 
 export function addOperationNode(instance, op, nodeType = 'vector') {

@@ -4,7 +4,7 @@ import { createNodeElement } from './nodeFactory.js';
 
 export function addScalarNode(instance, isResult = false) {
     const id = getNextNodeId();
-    const initialValue = '0'; // Default scalar value
+    const initialValue = '1'; // Default scalar value changed to 1
     const nodeTitle = isResult ? 'Result' : 'Scalar';
     const content = `
         <div class="font-semibold text-gray-700 mb-2 text-center">${nodeTitle}</div>

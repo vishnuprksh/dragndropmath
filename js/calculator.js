@@ -96,6 +96,48 @@ function evaluateScalarOperation(node) {
 
     if (val1 === null || val2 === null) {
         return null;
+    } else if (node.operation === 'scale-vec') {
+        // Special case for scalar-vector multiplication
+        try {
+            // Check which input is the scalar and which is the vector
+            let scalar, vector;
+            if (typeof val1 === 'number' && Array.isArray(val2)) {
+                scalar = val1;
+                vector = val2;
+            } else if (typeof val2 === 'number' && Array.isArray(val1)) {
+                scalar = val2;
+                vector = val1;
+            } else {
+                return 'Error: Scalar-Vector multiplication requires one scalar and one vector';
+            }
+            
+            // Perform the multiplication
+            return vector.map(v => scalar * v);
+        } catch (e) {
+            console.error(`Error during scalar-vector operation ${node.operation} on node ${node.id}:`, e);
+            return 'Error: Calculation Failed';
+        }
+    } else if (node.operation === 'scale-mat') {
+        // Special case for scalar-matrix multiplication
+        try {
+            // Check which input is the scalar and which is the matrix
+            let scalar, matrix;
+            if (typeof val1 === 'number' && Array.isArray(val2) && Array.isArray(val2[0])) {
+                scalar = val1;
+                matrix = val2;
+            } else if (typeof val2 === 'number' && Array.isArray(val1) && Array.isArray(val1[0])) {
+                scalar = val2;
+                matrix = val1;
+            } else {
+                return 'Error: Scalar-Matrix multiplication requires one scalar and one matrix';
+            }
+            
+            // Perform the multiplication (multiply each element by the scalar)
+            return matrix.map(row => row.map(value => scalar * value));
+        } catch (e) {
+            console.error(`Error during scalar-matrix operation ${node.operation} on node ${node.id}:`, e);
+            return 'Error: Calculation Failed';
+        }
     } else if (typeof val1 !== 'number' || typeof val2 !== 'number') {
         return 'Error: Input(s) not valid scalar(s)';
     } else {
@@ -186,6 +228,20 @@ function evaluateVectorOperation(node) {
                         return math.squeeze(math.dotMultiply(matrix1, matrix2)).toArray();
                     } catch (e) {
                         return 'Error: Vector dimensions must match for element-wise multiplication';
+                    }
+                case 'scale-vec':
+                    // Scalar-vector multiplication (dedicated operation)
+                    try {
+                        // Ensure correct order (scalar * vector)
+                        if (typeof val1 === 'number' && Array.isArray(val2)) {
+                            return val2.map(v => val1 * v);
+                        } else if (Array.isArray(val1) && typeof val2 === 'number') {
+                            return val1.map(v => v * val2);
+                        } else {
+                            return 'Error: Scalar-Vector multiplication requires one scalar and one vector';
+                        }
+                    } catch (e) {
+                        return 'Error: Failed to multiply scalar by vector';
                     }
                 case '/':
                     // Element-wise division
@@ -299,6 +355,30 @@ function evaluateMatrixOperation(node) {
 
     if (val1 === null || (!isUnaryOp && val2 === null)) {
         return null;
+    }
+    
+    // Special case for scalar-matrix multiplication
+    if (node.operation === 'scale-mat') {
+        try {
+            // Check which input is the scalar and which is the matrix
+            let scalar, matrix;
+            
+            if (typeof val1 === 'number' && Array.isArray(val2) && Array.isArray(val2[0])) {
+                scalar = val1;
+                matrix = val2;
+            } else if (typeof val2 === 'number' && Array.isArray(val1) && Array.isArray(val1[0])) {
+                scalar = val2;
+                matrix = val1;
+            } else {
+                return 'Error: Scalar-Matrix multiplication requires one scalar and one matrix';
+            }
+            
+            // Perform the multiplication (multiply each element by the scalar)
+            return matrix.map(row => row.map(value => scalar * value));
+        } catch (e) {
+            console.error(`Error during scalar-matrix operation ${node.operation} on node ${node.id}:`, e);
+            return 'Error: Calculation Failed';
+        }
     }
     
     // Check if inputs are valid matrices (arrays of arrays)

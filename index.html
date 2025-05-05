@@ -60,6 +60,12 @@
             <button data-op="pow" class="op-btn scalar-op bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mb-2 w-full transition duration-150 ease-in-out" style="display: none;">
                 Scalar ^ Scalar
             </button>
+            <button data-op="scale-vec" class="op-btn scalar-op bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mb-2 w-full transition duration-150 ease-in-out" style="display: none;">
+                Scalar × Vector
+            </button>
+            <button data-op="scale-mat" class="op-btn scalar-op bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mb-2 w-full transition duration-150 ease-in-out" style="display: none;">
+                Scalar × Matrix
+            </button>
             
             <!-- Vector Operations -->
             <button data-op="+" class="op-btn vector-op bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mb-2 w-full transition duration-150 ease-in-out">
@@ -80,6 +86,9 @@
             <button data-op="cross" class="op-btn vector-op bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mb-2 w-full transition duration-150 ease-in-out">
                 Vector × Vector
             </button>
+            <button data-op="scale-vec" class="op-btn vector-op bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mb-2 w-full transition duration-150 ease-in-out">
+                Scalar × Vector
+            </button>
             
             <!-- Matrix Operations -->
             <button data-op="+" class="op-btn matrix-op bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded mb-2 w-full transition duration-150 ease-in-out" style="display: none;">
@@ -99,6 +108,9 @@
             </button>
             <button data-op="transpose" class="op-btn matrix-op bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded mb-2 w-full transition duration-150 ease-in-out" style="display: none;">
                 Transpose (M→M)
+            </button>
+            <button data-op="scale-mat" class="op-btn matrix-op bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded mb-2 w-full transition duration-150 ease-in-out" style="display: none;">
+                Scalar × Matrix
             </button>
 
             <div class="mt-auto pt-4 border-t border-gray-200">
@@ -158,6 +170,8 @@
                     <button data-op="*" class="modal-op-btn bg-white hover:bg-blue-100 text-blue-600 font-bold py-2 px-4 rounded border border-blue-400">×</button>
                     <button data-op="/" class="modal-op-btn bg-white hover:bg-blue-100 text-blue-600 font-bold py-2 px-4 rounded border border-blue-400">÷</button>
                     <button data-op="pow" class="modal-op-btn bg-white hover:bg-blue-100 text-blue-600 font-bold py-2 px-4 rounded border border-blue-400">^</button>
+                    <button data-op="scale-vec" class="modal-op-btn bg-white hover:bg-blue-100 text-blue-600 font-bold py-2 px-4 rounded border border-blue-400">s×v</button>
+                    <button data-op="scale-mat" class="modal-op-btn bg-white hover:bg-blue-100 text-blue-600 font-bold py-2 px-4 rounded border border-blue-400">s×m</button>
                     
                     <!-- Vector Operations -->
                     <button data-op="dot" class="modal-op-btn bg-white hover:bg-green-100 text-green-600 font-bold py-2 px-4 rounded border border-green-400">·</button>

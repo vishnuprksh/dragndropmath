@@ -4,7 +4,7 @@ import { createNodeElement } from './nodeFactory.js';
 
 export function addVectorNode(instance, isResult = false) {
     const id = getNextNodeId();
-    const initialDisplayValue = '[0, 0]'; // Default 2D vector
+    const initialDisplayValue = '[1, 1]'; // Changed from [0, 0] to [1, 1]
     const nodeTitle = isResult ? 'Result' : 'Vector';
     const content = `
         <div class="font-semibold text-gray-700 mb-2 text-center">${nodeTitle}</div>
