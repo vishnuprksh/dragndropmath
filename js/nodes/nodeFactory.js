@@ -3,7 +3,11 @@ import { nodes } from '../nodeStore.js';
 import { handleNodeDoubleClick } from '../eventHandlers.js';
 
 export function createNodeElement(id, type, content, initialValue = '', isResult = false) {
+    // Get the zoom container instead of workspace directly
+    const zoomContainer = document.getElementById('zoom-container');
     const workspace = document.getElementById('workspace');
+    
+    // Create the node element
     const node = document.createElement('div');
     node.id = id;
     node.dataset.value = initialValue;
@@ -11,7 +15,10 @@ export function createNodeElement(id, type, content, initialValue = '', isResult
     const resultClass = isResult ? 'node-result' : '';
     node.className = `node ${typeClass} ${resultClass} bg-white p-3 rounded-md shadow-md border border-gray-300 min-w-[150px]`;
     node.innerHTML = content;
-    workspace.appendChild(node);
+    
+    // Append to the zoom container if it exists, otherwise fallback to workspace
+    (zoomContainer || workspace).appendChild(node);
+    
     node.addEventListener('dblclick', handleNodeDoubleClick);
 
     // Add event listener for node title rename (handled by specific elements)

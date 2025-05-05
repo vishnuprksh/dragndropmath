@@ -3,8 +3,11 @@ import { nodes } from './nodeStore.js';
 import { evaluateGraph } from './calculator.js';
 
 export function setupJsPlumb() {
+    // First check for the zoom container - it might not exist yet
+    const container = document.getElementById('zoom-container') || document.getElementById('workspace');
+    
     const instance = jsPlumb.getInstance({
-        Container: "workspace",
+        Container: container,
         DragOptions: { cursor: 'pointer', zIndex: 2000 },
         PaintStyle: { stroke: '#4a5568', strokeWidth: 2 }, // Tailwind gray-700
         EndpointStyle: { radius: 8, fill: '#4a5568' }, // Tailwind gray-700

@@ -37,6 +37,63 @@ body {
     height: 100%; /* Ensure it fills the flex item height */
     width: 100%;
     position: relative; /* Required for jsPlumb positioning */
+    overflow: hidden; /* Prevent scroll bars on the workspace */
+}
+
+/* Zoom container styling */
+#zoom-container {
+    min-width: 100%;
+    min-height: 100%;
+    position: absolute;
+    transform-origin: 0 0;
+}
+
+/* Zoom controls */
+.zoom-controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 4px;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+
+.zoom-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 3px;
+    border: 1px solid #cbd5e0;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    margin: 0 2px;
+    color: #4a5568;
+    transition: all 0.2s ease;
+}
+
+.zoom-btn:hover {
+    background-color: #f7fafc;
+    color: #2d3748;
+}
+
+.zoom-display {
+    padding: 0 10px;
+    font-size: 14px;
+    min-width: 56px;
+    text-align: center;
+    color: #4a5568;
+}
+
+/* Make nodes draggable only from header area to avoid conflicts with panning */
+.node .node-header {
+    cursor: move;
 }
 
 .node {
