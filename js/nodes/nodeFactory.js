@@ -23,6 +23,16 @@ export function createNodeElement(id, type, content, initialValue = '', isResult
 
 export function getOperationEndpoints(nodeId, op) {
     const baseUuid = `${nodeId}-${op}`;
+    
+    // Special case for matrix unary operations that only need one input
+    if (op === 'det' || op === 'transpose') {
+        return [
+            { options: { uuid: `${baseUuid}-in1`, anchor: [0, 0.5, -1, 0], isTarget: true, maxConnections: 1 }, params: {} },
+            { options: { uuid: `${baseUuid}-out`, anchor: "Right", isSource: true, maxConnections: 1 }, params: {} }
+        ];
+    }
+    
+    // Default for binary operations
     return [
         { options: { uuid: `${baseUuid}-in1`, anchor: [0, 0.3, -1, 0], isTarget: true, maxConnections: 1 }, params: {} },
         { options: { uuid: `${baseUuid}-in2`, anchor: [0, 0.7, -1, 0], isTarget: true, maxConnections: 1 }, params: {} },

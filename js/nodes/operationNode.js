@@ -2,19 +2,38 @@
 import { nodes, getNextNodeId } from '../nodeStore.js';
 import { createNodeElement, getOperationEndpoints } from './nodeFactory.js';
 import { addVectorNode } from './vectorNode.js';
+import { addScalarNode } from './scalarNode.js';
+import { addMatrixNode } from './matrixNode.js';
 import { evaluateGraph } from '../calculator.js';
 
-export function addOperationNode(instance, op) {
+// Define operations by type
+const operationGroups = {
+    scalar: ['+', '-', '*', '/', 'pow'],
+    vector: ['+', '-', '*', '/', 'cross', 'dot'],
+    matrix: ['+', '-', '*', 'matmul', 'det', 'transpose']
+};
+
+export function addOperationNode(instance, op, nodeType = 'vector') {
     const id = getNextNodeId();
-    const nodeType = 'operation';
-    const colorClass = 'text-green-600';
-    const title = 'Vector Op';
+    const type = 'operation';
+    
+    // Set color based on node type
+    let colorClass = 'text-green-600'; // Default for vector
+    let title = 'Vector Op';
+    
+    if (nodeType === 'scalar') {
+        colorClass = 'text-blue-600';
+        title = 'Scalar Op';
+    } else if (nodeType === 'matrix') {
+        colorClass = 'text-purple-600';
+        title = 'Matrix Op';
+    }
 
     const content = `
         <div class="font-semibold text-gray-700 text-center">${title}</div>
         <div data-nodeid="${id}" class="node-value-display text-2xl font-bold text-center ${colorClass} my-2 cursor-pointer">${op}</div>
     `;
-    const nodeElement = createNodeElement(id, nodeType, content, op);
+    const nodeElement = createNodeElement(id, type, content, op);
 
     instance.draggable(nodeElement, { containment: 'parent' });
 
@@ -25,10 +44,25 @@ export function addOperationNode(instance, op) {
     });
 
     // Create the node in our data structure
-    nodes[id] = { type: nodeType, operation: op, element: nodeElement, inputs: {}, output: null };
+    nodes[id] = { 
+        type: type, 
+        operation: op, 
+        element: nodeElement, 
+        inputs: {}, 
+        output: null,
+        operationFor: nodeType // Store which node type this operation is for
+    };
     
-    // Create an automatic result node, passing true to indicate it's a result node
-    const resultNodeId = addVectorNode(instance, true);
+    // Create an automatic result node of the appropriate type
+    let resultNodeId;
+    
+    if (nodeType === 'scalar') {
+        resultNodeId = addScalarNode(instance, true);
+    } else if (nodeType === 'matrix') {
+        resultNodeId = addMatrixNode(instance, true);
+    } else { // vector is default
+        resultNodeId = addVectorNode(instance, true);
+    }
     
     // Position the result node to the right of the operation node
     const resultNode = document.getElementById(resultNodeId);
@@ -118,4 +152,9 @@ function retryConnect(instance, sourceId, targetId, op) {
     } catch (err) {
         console.error("Error on retry connecting nodes:", err);
     }
+}
+
+// Export available operations for use in the UI
+export function getAvailableOperations(nodeType = 'vector') {
+    return operationGroups[nodeType] || operationGroups.vector;
 }

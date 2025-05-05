@@ -2,25 +2,54 @@
 import { nodes } from './nodeStore.js';
 import { evaluateGraph } from './calculator.js';
 import { addVectorNode } from './nodes/vectorNode.js';
-import { addOperationNode } from './nodes/operationNode.js';
+import { addScalarNode } from './nodes/scalarNode.js';
+import { addMatrixNode } from './nodes/matrixNode.js';
+import { addOperationNode, getAvailableOperations } from './nodes/operationNode.js';
 
 // Track the currently selected node
 let selectedNodeId = null;
 // Track the node being edited in the modal
 let editingNodeId = null;
+// Track current operation type
+let currentNodeType = 'vector';
 
 export function setupEventListeners(instance) {
     const addVectorBtn = document.getElementById('add-vector-btn');
+    const addScalarBtn = document.getElementById('add-scalar-btn');
+    const addMatrixBtn = document.getElementById('add-matrix-btn');
     const operationButtons = document.querySelectorAll('.op-btn');
+    const nodeTypeButtons = document.querySelectorAll('.node-type-btn');
     const workspace = document.getElementById('workspace');
 
-    // Add event listeners for buttons
+    // Add event listeners for node buttons
     addVectorBtn.addEventListener('click', () => addVectorNode(instance));
+    addScalarBtn.addEventListener('click', () => addScalarNode(instance));
+    addMatrixBtn.addEventListener('click', () => addMatrixNode(instance));
 
+    // Add event listeners for node type selection buttons
+    nodeTypeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const nodeType = button.getAttribute('data-type');
+            
+            // Update current node type
+            currentNodeType = nodeType;
+            
+            // Update UI to show active state
+            nodeTypeButtons.forEach(btn => {
+                btn.classList.remove('active-type');
+            });
+            button.classList.add('active-type');
+            
+            // Update operation buttons based on node type
+            updateOperationButtons(nodeType);
+        });
+    });
+
+    // Add event listeners for operation buttons
     operationButtons.forEach(button => {
         button.addEventListener('click', () => {
             const op = button.getAttribute('data-op');
-            addOperationNode(instance, op);
+            addOperationNode(instance, op, currentNodeType);
         });
     });
 
@@ -62,7 +91,7 @@ export function setupEventListeners(instance) {
         if (!nodeElement) return;
         const node = nodes[nodeElement.id];
 
-        if (node && node.type === 'vector') {
+        if (node && (node.type === 'vector' || node.type === 'scalar' || node.type === 'matrix')) {
             inputElement.classList.add('bg-gray-50');
             inputElement.classList.remove('bg-white', 'border-blue-400');
         }
@@ -79,7 +108,9 @@ export function setupEventListeners(instance) {
             inputElement.blur();
         } else if (event.key === 'Escape') {
             if (node) {
-                inputElement.value = node.element.dataset.value || '[0, 0]';
+                inputElement.value = node.element.dataset.value || 
+                    (node.type === 'scalar' ? '0' : 
+                    (node.type === 'vector' ? '[0, 0]' : '[[1, 0], [0, 1]]'));
             }
             inputElement.blur();
         }
@@ -87,6 +118,34 @@ export function setupEventListeners(instance) {
 
     // Set up the edit modal
     setupEditModal(instance);
+    
+    // Initialize operation buttons with default node type (vector)
+    updateOperationButtons(currentNodeType);
+}
+
+// Update operation buttons based on the selected node type
+function updateOperationButtons(nodeType) {
+    const operationButtons = document.querySelectorAll('.op-btn');
+    const availableOps = getAvailableOperations(nodeType);
+    
+    operationButtons.forEach(button => {
+        const op = button.getAttribute('data-op');
+        const buttonOpType = button.classList.contains('scalar-op') ? 'scalar' : 
+                             button.classList.contains('vector-op') ? 'vector' : 
+                             button.classList.contains('matrix-op') ? 'matrix' : '';
+        
+        // Hide all buttons first
+        button.style.display = 'none';
+        
+        // Only show buttons matching current operation type AND in the available operations list
+        if (availableOps.includes(op) && (buttonOpType === nodeType || buttonOpType === '')) {
+            button.style.display = '';
+            
+            // Update classes based on node type
+            button.classList.remove('scalar-op', 'vector-op', 'matrix-op');
+            button.classList.add(`${nodeType}-op`);
+        }
+    });
 }
 
 // Set up all event handlers for the edit modal
@@ -96,9 +155,13 @@ function setupEditModal(instance) {
     const cancelBtn = document.getElementById('cancel-edit');
     const saveBtn = document.getElementById('save-edit');
     const vectorForm = document.getElementById('vector-edit-form');
+    const scalarForm = document.getElementById('scalar-edit-form');
+    const matrixForm = document.getElementById('matrix-edit-form');
     const operationForm = document.getElementById('operation-edit-form');
     const vectorInput = document.getElementById('vector-value-input');
-    const vectorError = document.getElementById('vector-input-error');
+    const scalarInput = document.getElementById('scalar-value-input');
+    const matrixInput = document.getElementById('matrix-value-input');
+    const inputError = document.getElementById('vector-input-error');
     const operationBtns = document.querySelectorAll('.modal-op-btn');
     
     // Close modal when clicking close button
@@ -136,8 +199,22 @@ function setupEditModal(instance) {
         saveNodeChanges(instance);
     });
     
-    // Handle enter key in vector input
+    // Handle enter key in input fields
     vectorInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            saveNodeChanges(instance);
+        }
+    });
+    
+    scalarInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            saveNodeChanges(instance);
+        }
+    });
+    
+    matrixInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
             event.preventDefault();
             saveNodeChanges(instance);
@@ -149,9 +226,13 @@ function setupEditModal(instance) {
 function showModal(nodeId) {
     const modal = document.getElementById('edit-node-modal');
     const vectorForm = document.getElementById('vector-edit-form');
+    const scalarForm = document.getElementById('scalar-edit-form');
+    const matrixForm = document.getElementById('matrix-edit-form');
     const operationForm = document.getElementById('operation-edit-form');
     const vectorInput = document.getElementById('vector-value-input');
-    const vectorError = document.getElementById('vector-input-error');
+    const scalarInput = document.getElementById('scalar-value-input');
+    const matrixInput = document.getElementById('matrix-value-input');
+    const inputError = document.getElementById('vector-input-error');
     const modalTitle = document.getElementById('modal-title');
     const operationBtns = document.querySelectorAll('.modal-op-btn');
     
@@ -160,12 +241,38 @@ function showModal(nodeId) {
     
     // Reset forms
     vectorForm.classList.add('hidden');
+    scalarForm.classList.add('hidden');
+    matrixForm.classList.add('hidden');
     operationForm.classList.add('hidden');
-    vectorError.classList.add('hidden');
+    inputError.classList.add('hidden');
     operationBtns.forEach(btn => btn.classList.remove('selected'));
     
     // Set up the modal based on node type
-    if (node.type === 'vector') {
+    if (node.type === 'scalar') {
+        modalTitle.textContent = 'Edit Scalar';
+        scalarForm.classList.remove('hidden');
+        scalarInput.value = node.element.dataset.value || node.value.toString();
+        
+        // Check if this node has inputs (can't edit if it has)
+        const inputSourceId = node.inputs[`${nodeId}-in`];
+        if (inputSourceId) {
+            scalarInput.disabled = true;
+            scalarInput.classList.add('bg-gray-100');
+            inputError.textContent = "This scalar is receiving input and cannot be edited directly.";
+            inputError.classList.remove('hidden');
+        } else {
+            scalarInput.disabled = false;
+            scalarInput.classList.remove('bg-gray-100');
+        }
+        
+        // Focus after setup
+        setTimeout(() => {
+            if (!scalarInput.disabled) {
+                scalarInput.focus();
+                scalarInput.select();
+            }
+        }, 100);
+    } else if (node.type === 'vector') {
         modalTitle.textContent = 'Edit Vector';
         vectorForm.classList.remove('hidden');
         vectorInput.value = node.element.dataset.value || JSON.stringify(node.value);
@@ -175,12 +282,44 @@ function showModal(nodeId) {
         if (inputSourceId) {
             vectorInput.disabled = true;
             vectorInput.classList.add('bg-gray-100');
-            vectorError.textContent = "This vector is receiving input and cannot be edited directly.";
-            vectorError.classList.remove('hidden');
+            inputError.textContent = "This vector is receiving input and cannot be edited directly.";
+            inputError.classList.remove('hidden');
         } else {
             vectorInput.disabled = false;
             vectorInput.classList.remove('bg-gray-100');
         }
+        
+        // Focus after setup
+        setTimeout(() => {
+            if (!vectorInput.disabled) {
+                vectorInput.focus();
+                vectorInput.select();
+            }
+        }, 100);
+    } else if (node.type === 'matrix') {
+        modalTitle.textContent = 'Edit Matrix';
+        matrixForm.classList.remove('hidden');
+        matrixInput.value = node.element.dataset.value || JSON.stringify(node.value);
+        
+        // Check if this node has inputs (can't edit if it has)
+        const inputSourceId = node.inputs[`${nodeId}-in`];
+        if (inputSourceId) {
+            matrixInput.disabled = true;
+            matrixInput.classList.add('bg-gray-100');
+            inputError.textContent = "This matrix is receiving input and cannot be edited directly.";
+            inputError.classList.remove('hidden');
+        } else {
+            matrixInput.disabled = false;
+            matrixInput.classList.remove('bg-gray-100');
+        }
+        
+        // Focus after setup
+        setTimeout(() => {
+            if (!matrixInput.disabled) {
+                matrixInput.focus();
+                matrixInput.select();
+            }
+        }, 100);
     } else if (node.type === 'operation') {
         modalTitle.textContent = 'Edit Operation';
         operationForm.classList.remove('hidden');
@@ -191,6 +330,18 @@ function showModal(nodeId) {
         if (currentOpBtn) {
             currentOpBtn.classList.add('selected');
         }
+        
+        // Filter operation buttons based on node's operation type
+        operationBtns.forEach(button => {
+            const op = button.getAttribute('data-op');
+            const availableOps = getAvailableOperations(node.operationFor || 'vector');
+            
+            if (availableOps.includes(op)) {
+                button.style.display = '';
+            } else {
+                button.style.display = 'none';
+            }
+        });
     }
     
     // Show the modal with animation
@@ -199,14 +350,6 @@ function showModal(nodeId) {
     setTimeout(() => {
         modal.classList.add('show');
     }, 10);
-    
-    // Focus the input if it's a vector
-    if (node.type === 'vector' && !vectorInput.disabled) {
-        setTimeout(() => {
-            vectorInput.focus();
-            vectorInput.select();
-        }, 100);
-    }
 }
 
 // Hide the modal
@@ -227,36 +370,62 @@ function saveNodeChanges(instance) {
     
     const node = nodes[editingNodeId];
     const vectorInput = document.getElementById('vector-value-input');
-    const vectorError = document.getElementById('vector-input-error');
+    const scalarInput = document.getElementById('scalar-value-input');
+    const matrixInput = document.getElementById('matrix-value-input');
+    const inputError = document.getElementById('vector-input-error');
     
-    if (node.type === 'vector') {
+    if (node.type === 'scalar') {
+        const valueStr = scalarInput.value.trim();
+        
+        try {
+            if (valueStr === '') throw new Error("Input cannot be empty.");
+            
+            // Parse the scalar value
+            if (!/^-?\d+(\.\d+)?$/.test(valueStr)) {
+                throw new Error("Scalar must be a valid number.");
+            }
+            
+            const newValue = parseFloat(valueStr);
+            
+            if (node.value !== newValue) {
+                node.value = newValue;
+                node.element.dataset.value = valueStr;
+                const displayElement = node.element.querySelector('.node-value-display');
+                displayElement.value = valueStr;
+                node.error = false;
+                console.log(`Scalar node ${editingNodeId} value set to`, newValue);
+                evaluateGraph();
+            }
+            
+            hideModal();
+        } catch (e) {
+            console.error(`Invalid scalar input:`, e.message);
+            inputError.textContent = e.message;
+            inputError.classList.remove('hidden');
+        }
+    } else if (node.type === 'vector') {
         const valueStr = vectorInput.value.trim();
         
         try {
             if (valueStr === '') throw new Error("Input cannot be empty.");
 
-            // Support both scalar values (numbers) and matrices/vectors of any dimension
+            // Support both scalar values (numbers) and vectors
             let newValue;
             if (/^-?\d+(\.\d+)?$/.test(valueStr)) {
                 // This is a scalar number
                 newValue = parseFloat(valueStr);
             } else {
-                // Try parsing as a matrix/vector
+                // Try parsing as a vector
                 newValue = JSON.parse(valueStr);
                 
-                // Validate if it's a valid matrix/vector (array of numbers or array of arrays of numbers)
+                // Validate if it's a valid vector (array of numbers)
                 if (!Array.isArray(newValue)) {
-                    throw new Error("Input must be a valid matrix/vector (array) or a single number.");
+                    throw new Error("Input must be a valid vector (array) or a single number.");
                 }
                 
-                // Recursive function to validate that all elements are numbers or arrays of numbers
-                const validateMatrix = (arr) => {
-                    if (!Array.isArray(arr)) return typeof arr === 'number';
-                    return arr.every(item => validateMatrix(item));
-                };
-                
-                if (!validateMatrix(newValue)) {
-                    throw new Error("Matrix/vector must contain only numbers or arrays of numbers.");
+                // Validate that all elements are numbers
+                if (!newValue.every(item => typeof item === 'number')) {
+                    throw new Error("Vector must contain only numbers.");
                 }
             }
 
@@ -272,9 +441,50 @@ function saveNodeChanges(instance) {
             
             hideModal();
         } catch (e) {
-            console.error(`Invalid matrix/vector input:`, e.message);
-            vectorError.textContent = e.message;
-            vectorError.classList.remove('hidden');
+            console.error(`Invalid vector input:`, e.message);
+            inputError.textContent = e.message;
+            inputError.classList.remove('hidden');
+        }
+    } else if (node.type === 'matrix') {
+        const valueStr = matrixInput.value.trim();
+        
+        try {
+            if (valueStr === '') throw new Error("Input cannot be empty.");
+
+            // Parse matrix value
+            const newValue = JSON.parse(valueStr);
+            
+            // Validate if it's a valid matrix (array of arrays of numbers)
+            if (!Array.isArray(newValue) || !newValue.every(row => Array.isArray(row))) {
+                throw new Error("Input must be a valid matrix (array of arrays).");
+            }
+            
+            // Validate that all elements are numbers
+            if (!newValue.every(row => row.every(item => typeof item === 'number'))) {
+                throw new Error("Matrix must contain only numbers.");
+            }
+            
+            // Validate that all rows have the same length
+            const rowLength = newValue[0].length;
+            if (!newValue.every(row => row.length === rowLength)) {
+                throw new Error("All rows in the matrix must have the same length.");
+            }
+
+            if (JSON.stringify(node.value) !== JSON.stringify(newValue)) {
+                node.value = newValue;
+                node.element.dataset.value = valueStr;
+                const displayElement = node.element.querySelector('.node-value-display');
+                displayElement.value = valueStr;
+                node.error = false;
+                console.log(`Matrix node ${editingNodeId} value set to`, newValue);
+                evaluateGraph();
+            }
+            
+            hideModal();
+        } catch (e) {
+            console.error(`Invalid matrix input:`, e.message);
+            inputError.textContent = e.message;
+            inputError.classList.remove('hidden');
         }
     } else if (node.type === 'operation') {
         const selectedOpBtn = document.querySelector('.modal-op-btn.selected');
@@ -369,32 +579,51 @@ export function updateNodeValue(inputElement) {
     const node = nodes[nodeId];
     const valueStr = inputElement.value.trim();
 
-    if (node.type === 'vector') {
+    if (node.type === 'scalar') {
+        try {
+            if (valueStr === '') throw new Error("Input cannot be empty.");
+            
+            // Parse the scalar value
+            if (!/^-?\d+(\.\d+)?$/.test(valueStr)) {
+                throw new Error("Scalar must be a valid number.");
+            }
+            
+            const newValue = parseFloat(valueStr);
+            
+            if (node.value !== newValue) {
+                node.value = newValue;
+                node.element.dataset.value = valueStr;
+                node.error = false;
+                console.log(`Scalar node ${nodeId} value set to`, newValue);
+                evaluateGraph();
+            }
+            inputElement.classList.remove('border-red-500');
+        } catch (e) {
+            console.error(`Invalid scalar input for node ${nodeId}:`, e.message);
+            inputElement.classList.add('border-red-500');
+            node.error = true;
+        }
+    } else if (node.type === 'vector') {
         try {
             if (valueStr === '') throw new Error("Input cannot be empty.");
 
-            // Support both scalar values (numbers) and matrices/vectors of any dimension
+            // Support both scalar values (numbers) and vectors
             let newValue;
             if (/^-?\d+(\.\d+)?$/.test(valueStr)) {
                 // This is a scalar number
                 newValue = parseFloat(valueStr);
             } else {
-                // Try parsing as a matrix/vector
+                // Try parsing as a vector
                 newValue = JSON.parse(valueStr);
                 
-                // Validate if it's a valid matrix/vector (array of numbers or array of arrays of numbers)
+                // Validate if it's a valid vector (array of numbers)
                 if (!Array.isArray(newValue)) {
-                    throw new Error("Input must be a valid matrix/vector (array) or a single number.");
+                    throw new Error("Input must be a valid vector (array) or a single number.");
                 }
                 
-                // Recursive function to validate that all elements are numbers or arrays of numbers
-                const validateMatrix = (arr) => {
-                    if (!Array.isArray(arr)) return typeof arr === 'number';
-                    return arr.every(item => validateMatrix(item));
-                };
-                
-                if (!validateMatrix(newValue)) {
-                    throw new Error("Matrix/vector must contain only numbers or arrays of numbers.");
+                // Validate that all elements are numbers
+                if (!newValue.every(item => typeof item === 'number')) {
+                    throw new Error("Vector must contain only numbers.");
                 }
             }
 
@@ -407,7 +636,43 @@ export function updateNodeValue(inputElement) {
             }
             inputElement.classList.remove('border-red-500');
         } catch (e) {
-            console.error(`Invalid matrix/vector input for node ${nodeId}:`, e.message);
+            console.error(`Invalid vector input for node ${nodeId}:`, e.message);
+            inputElement.classList.add('border-red-500');
+            node.error = true;
+        }
+    } else if (node.type === 'matrix') {
+        try {
+            if (valueStr === '') throw new Error("Input cannot be empty.");
+
+            // Parse matrix value
+            const newValue = JSON.parse(valueStr);
+            
+            // Validate if it's a valid matrix (array of arrays of numbers)
+            if (!Array.isArray(newValue) || !newValue.every(row => Array.isArray(row))) {
+                throw new Error("Input must be a valid matrix (array of arrays).");
+            }
+            
+            // Validate that all elements are numbers
+            if (!newValue.every(row => row.every(item => typeof item === 'number'))) {
+                throw new Error("Matrix must contain only numbers.");
+            }
+            
+            // Validate that all rows have the same length
+            const rowLength = newValue[0].length;
+            if (!newValue.every(row => row.length === rowLength)) {
+                throw new Error("All rows in the matrix must have the same length.");
+            }
+
+            if (JSON.stringify(node.value) !== JSON.stringify(newValue)) {
+                node.value = newValue;
+                node.element.dataset.value = valueStr;
+                node.error = false;
+                console.log(`Matrix node ${nodeId} value set to`, newValue);
+                evaluateGraph();
+            }
+            inputElement.classList.remove('border-red-500');
+        } catch (e) {
+            console.error(`Invalid matrix input for node ${nodeId}:`, e.message);
             inputElement.classList.add('border-red-500');
             node.error = true;
         }
