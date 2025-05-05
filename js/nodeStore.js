@@ -1,4 +1,8 @@
 // nodeStore.js - Centralized store for node data
+// Import the update display functions from vector and matrix nodes
+import { updateVectorNodeDisplay } from './nodes/vectorNode.js';
+import { updateMatrixNodeDisplay } from './nodes/matrixNode.js';
+
 export let nodes = {}; // Store data for all nodes (vectors and operations)
 export let nodeCounter = 0;
 
@@ -40,62 +44,56 @@ export function updateNodeDisplay(nodeId) {
     // Only proceed if node is a data type (not an operation)
     if (node.type !== 'vector' && node.type !== 'scalar' && node.type !== 'matrix') return;
 
-    const inputElement = node.element.querySelector('.node-value-display');
     const hasInputConnection = Object.keys(node.inputs).length > 0;
     let displayValue = '--';
 
     if (hasInputConnection) {
-        const calcValue = node.calculatedValue;
-        displayValue = (calcValue !== undefined && calcValue !== null) ? calcValue : '--';
-        inputElement.readOnly = true;
-        inputElement.classList.add('bg-gray-50');
-        inputElement.classList.remove('bg-white', 'border-blue-400', 'border-red-500');
+        displayValue = (node.calculatedValue !== undefined && node.calculatedValue !== null) ? node.calculatedValue : '--';
         node.error = false;
     } else {
-        // Use appropriate default value based on node type
-        if (node.type === 'scalar') {
-            displayValue = node.element.dataset.value || '0';
-        } else if (node.type === 'vector') {
-            displayValue = node.element.dataset.value || '[0, 0]';
-        } else if (node.type === 'matrix') {
-            displayValue = node.element.dataset.value || '[[1, 0], [0, 1]]';
-        }
-        
-        if (inputElement.readOnly) {
-            inputElement.classList.add('bg-gray-50');
-            inputElement.classList.remove('bg-white', 'border-blue-400');
-        }
-        if (node.error) {
-            inputElement.classList.add('border-red-500');
-        } else {
-            inputElement.classList.remove('border-red-500');
-        }
+        // Use the node's direct value
+        displayValue = node.value;
     }
 
     try {
-        // Format display value based on node type
+        // Use appropriate display method based on node type
         if (node.type === 'scalar') {
-            // Handle scalar values
-            inputElement.value = (typeof displayValue === 'number') 
-                ? displayValue.toString() 
-                : String(displayValue);
-        } else if (node.type === 'vector') {
-            // Handle vector values and scalar results from vector operations
-            if (typeof displayValue === 'number') {
-                inputElement.value = displayValue.toString();
-            } else {
-                inputElement.value = (typeof displayValue === 'object' && displayValue !== null)
-                    ? JSON.stringify(displayValue)
+            // Handle scalar values using the existing input element
+            const inputElement = node.element.querySelector('.node-value-display');
+            if (inputElement) {
+                inputElement.value = (typeof displayValue === 'number') 
+                    ? displayValue.toString() 
                     : String(displayValue);
+                
+                inputElement.readOnly = true;
+                
+                if (hasInputConnection) {
+                    inputElement.classList.add('bg-gray-50');
+                    inputElement.classList.remove('bg-white', 'border-blue-400');
+                }
+                
+                if (node.error) {
+                    inputElement.classList.add('border-red-500');
+                } else {
+                    inputElement.classList.remove('border-red-500');
+                }
             }
+        } else if (node.type === 'vector') {
+            // Use the new table display for vectors
+            updateVectorNodeDisplay(nodeId, displayValue);
         } else if (node.type === 'matrix') {
-            // Handle matrix values
-            inputElement.value = (typeof displayValue === 'object' && displayValue !== null)
-                ? JSON.stringify(displayValue)
-                : String(displayValue);
+            // Use the new table display for matrices
+            updateMatrixNodeDisplay(nodeId, displayValue);
         }
     } catch (e) {
-        console.error("Error formatting display value for node", nodeId, e);
-        inputElement.value = "Error Displaying Value";
+        console.error("Error updating display value for node", nodeId, e);
+        const container = node.element.querySelector('.node-value-display, .vector-container, .matrix-container');
+        if (container) {
+            if (container.tagName === 'INPUT') {
+                container.value = "Error Displaying Value";
+            } else {
+                container.innerHTML = `<div class="text-red-500 p-2">Error Displaying Value</div>`;
+            }
+        }
     }
 }

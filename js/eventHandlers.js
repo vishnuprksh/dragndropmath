@@ -116,6 +116,55 @@ export function setupEventListeners(instance) {
         }
     };
 
+    // Handle vector cell editing events
+    window.handleVectorCellBlur = function(input) {
+        if (!input.readOnly) {
+            const nodeId = input.dataset.nodeid;
+            updateVectorCell(input, nodeId);
+        }
+    };
+
+    // Handle matrix cell editing events
+    window.handleMatrixCellBlur = function(input) {
+        if (!input.readOnly) {
+            const nodeId = input.dataset.nodeid;
+            updateMatrixCell(input, nodeId);
+        }
+    };
+
+    // Handle cell keydown events (for both vector and matrix)
+    window.handleCellKeydown = function(event, input) {
+        if (input.readOnly) return;
+        
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            if (input.classList.contains('vector-cell')) {
+                updateVectorCell(input, input.dataset.nodeid);
+            } else if (input.classList.contains('matrix-cell')) {
+                updateMatrixCell(input, input.dataset.nodeid);
+            }
+            input.blur();
+        } else if (event.key === 'Escape') {
+            event.preventDefault();
+            // Reset to original value
+            const nodeId = input.dataset.nodeid;
+            const node = nodes[nodeId];
+            
+            if (input.classList.contains('vector-cell')) {
+                const index = parseInt(input.dataset.index);
+                input.value = node.value[index];
+            } else if (input.classList.contains('matrix-cell')) {
+                const row = parseInt(input.dataset.row);
+                const col = parseInt(input.dataset.col);
+                input.value = node.value[row][col];
+            }
+            
+            input.readOnly = true;
+            input.classList.remove('bg-white', 'border-green-400', 'border-purple-400');
+            input.blur();
+        }
+    };
+
     // Set up the edit modal
     setupEditModal(instance);
     
