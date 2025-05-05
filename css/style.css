@@ -58,6 +58,13 @@ body {
     border-width: 2px;
 }
 
+/* Style for auto-generated result nodes */
+.node-result {
+    border-color: #8b5cf6; /* Tailwind purple-500 */
+    border-width: 2px;
+    background-color: #f3e8ff; /* Light purple background */
+}
+
 .node-operation {
     background-color: lightcoral;
     border-radius: 50%; /* Make operations circular */

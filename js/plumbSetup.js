@@ -7,7 +7,7 @@ export function setupJsPlumb() {
         Container: "workspace",
         DragOptions: { cursor: 'pointer', zIndex: 2000 },
         PaintStyle: { stroke: '#4a5568', strokeWidth: 2 }, // Tailwind gray-700
-        EndpointStyle: { radius: 5, fill: '#4a5568' }, // Tailwind gray-700
+        EndpointStyle: { radius: 8, fill: '#4a5568' }, // Tailwind gray-700
         EndpointHoverStyle: { fill: '#2b6cb0' }, // Tailwind blue-700
         Connector: ["Bezier", { curviness: 50 }],
         Anchor: "Continuous", // Allows connections anywhere along the edge

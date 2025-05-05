@@ -2,13 +2,14 @@
 import { nodes } from '../nodeStore.js';
 import { handleNodeDoubleClick } from '../eventHandlers.js';
 
-export function createNodeElement(id, type, content, initialValue = '') {
+export function createNodeElement(id, type, content, initialValue = '', isResult = false) {
     const workspace = document.getElementById('workspace');
     const node = document.createElement('div');
     node.id = id;
     node.dataset.value = initialValue;
     const typeClass = `node-${type}`;
-    node.className = `node ${typeClass} bg-white p-3 rounded-md shadow-md border border-gray-300 min-w-[150px]`;
+    const resultClass = isResult ? 'node-result' : '';
+    node.className = `node ${typeClass} ${resultClass} bg-white p-3 rounded-md shadow-md border border-gray-300 min-w-[150px]`;
     node.innerHTML = content;
     workspace.appendChild(node);
     node.addEventListener('dblclick', handleNodeDoubleClick);
