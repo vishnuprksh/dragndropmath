@@ -30,7 +30,7 @@ export function addOperationNode(instance, op, nodeType = 'vector') {
     }
 
     const content = `
-        <div class="font-semibold text-gray-700 text-center">${title}</div>
+        <div class="font-semibold text-gray-700 text-center node-title" title="Double-click to rename">${title}</div>
         <div data-nodeid="${id}" class="node-value-display text-2xl font-bold text-center ${colorClass} my-2 cursor-pointer">${op}</div>
     `;
     const nodeElement = createNodeElement(id, type, content, op);

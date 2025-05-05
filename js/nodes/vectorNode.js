@@ -12,7 +12,7 @@ export function addVectorNode(instance, isResult = false) {
     const tableHTML = createVectorTableHTML(id, initialValue);
     
     const content = `
-        <div class="font-semibold text-gray-700 mb-2 text-center">${nodeTitle}</div>
+        <div class="font-semibold text-gray-700 mb-2 text-center node-title" title="Double-click to rename">${nodeTitle}</div>
         <div class="vector-container" data-nodeid="${id}" data-value='${initialDisplayValue}'>
             ${tableHTML}
         </div>

@@ -14,11 +14,60 @@ export function createNodeElement(id, type, content, initialValue = '', isResult
     workspace.appendChild(node);
     node.addEventListener('dblclick', handleNodeDoubleClick);
 
+    // Add event listener for node title rename (handled by specific elements)
+    setupNodeTitleRename(node);
+
     const nodeCount = Object.keys(nodes).length;
     node.style.left = `${50 + (nodeCount % 5) * 180}px`;
     node.style.top = `${50 + Math.floor(nodeCount / 5) * 120}px`;
 
     return node;
+}
+
+// Set up event listeners for node title renaming
+function setupNodeTitleRename(nodeElement) {
+    const titleElement = nodeElement.querySelector('.node-title');
+    if (titleElement) {
+        titleElement.addEventListener('dblclick', (event) => {
+            event.stopPropagation(); // Prevent node modal from opening
+            
+            // Create an input element to replace the title
+            const currentTitle = titleElement.textContent;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentTitle;
+            input.className = 'w-full text-center font-semibold text-gray-700 mb-2 p-0 border border-blue-400 focus:outline-none';
+            
+            // Replace the title element with the input
+            titleElement.innerHTML = '';
+            titleElement.appendChild(input);
+            
+            // Focus and select the text
+            input.focus();
+            input.select();
+            
+            // Handle input blur to save the new title
+            input.addEventListener('blur', () => {
+                if (input.value.trim() === '') {
+                    // Don't allow empty titles
+                    titleElement.textContent = currentTitle;
+                } else {
+                    titleElement.textContent = input.value.trim();
+                }
+            });
+            
+            // Handle enter key to save
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    input.blur();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    titleElement.textContent = currentTitle;
+                }
+            });
+        });
+    }
 }
 
 export function getOperationEndpoints(nodeId, op) {
