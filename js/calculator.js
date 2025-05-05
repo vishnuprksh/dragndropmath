@@ -1,13 +1,14 @@
 // calculator.js - Logic for evaluating the graph of nodes
 import { nodes, getNodeValue, updateNodeDisplay } from './nodeStore.js';
 import { isValidVector } from './nodes/nodeFactory.js';
+// The math library is now available globally from the CDN
 
 export function evaluateGraph() {
     console.log("Evaluating graph...");
 
-    // Reset calculated values for vector nodes
+    // Reset calculated values for vector nodes that are result nodes
     Object.keys(nodes).forEach(id => {
-        if (nodes[id].type === 'vector') {
+        if (nodes[id].type === 'vector' && nodes[id].isAutoResult) {
             nodes[id].calculatedValue = undefined;
         }
     });
@@ -27,30 +28,31 @@ export function evaluateGraph() {
 
             if (node.type === 'operation') {
                 result = evaluateVectorOperation(node);
-            }
+                
+                // Propagate the result to output nodes if applicable
+                if (node.output && nodes[node.output]) {
+                    const outputNode = nodes[node.output];
+                    let canPropagate = false;
 
-            // Propagate the result to output nodes if applicable
-            if (node.output && nodes[node.output]) {
-                const outputNode = nodes[node.output];
-                let canPropagate = false;
-
-                if (outputNode.type === 'vector' && (isValidVector(result) || result === null || typeof result === 'string')) {
-                    canPropagate = true;
-                }
-
-                if (canPropagate) {
-                    const currentCalcValueStr = JSON.stringify(outputNode.calculatedValue);
-                    const newResultStr = JSON.stringify(result);
-
-                    if (currentCalcValueStr !== newResultStr) {
-                        outputNode.calculatedValue = result;
-                        changed = true;
+                    // Only propagate to vector nodes, not to operation nodes
+                    if (outputNode.type === 'vector' && (isValidVector(result) || result === null || typeof result === 'string' || typeof result === 'number')) {
+                        canPropagate = true;
                     }
-                } else {
-                    console.warn(`Type mismatch: Cannot propagate result from ${node.type} '${node.operation}' to ${outputNode.type} node ${node.output}`);
-                    if (outputNode.calculatedValue !== undefined) {
-                        outputNode.calculatedValue = 'Error: Type Mismatch';
-                        changed = true;
+
+                    if (canPropagate) {
+                        const currentCalcValueStr = JSON.stringify(outputNode.calculatedValue);
+                        const newResultStr = JSON.stringify(result);
+
+                        if (currentCalcValueStr !== newResultStr) {
+                            outputNode.calculatedValue = result;
+                            changed = true;
+                        }
+                    } else {
+                        console.warn(`Type mismatch: Cannot propagate result from ${node.type} '${node.operation}' to ${outputNode.type} node ${node.output}`);
+                        if (outputNode.calculatedValue !== undefined) {
+                            outputNode.calculatedValue = 'Error: Type Mismatch';
+                            changed = true;
+                        }
                     }
                 }
             }
@@ -74,6 +76,12 @@ export function evaluateGraph() {
 function evaluateVectorOperation(node) {
     const input1Id = Object.entries(node.inputs).find(([uuid, sourceId]) => uuid.endsWith('-in1'))?.[1];
     const input2Id = Object.entries(node.inputs).find(([uuid, sourceId]) => uuid.endsWith('-in2'))?.[1];
+    
+    // Handle case where inputs aren't connected yet
+    if (!input1Id || !input2Id) {
+        return null;
+    }
+    
     const val1 = input1Id ? getNodeValue(input1Id) : null;
     const val2 = input2Id ? getNodeValue(input2Id) : null;
 
@@ -83,19 +91,41 @@ function evaluateVectorOperation(node) {
         return 'Error: Input(s) not vector(s)';
     } else {
         try {
+            // Convert arrays to mathjs matrices to use proper matrix operations
+            const matrix1 = math.matrix(val1);
+            const matrix2 = math.matrix(val2);
+
             switch (node.operation) {
                 case '+':
-                    return [val1[0] + val2[0], val1[1] + val2[1]];
+                    // Matrix addition
+                    return math.squeeze(math.add(matrix1, matrix2)).toArray();
                 case '-':
-                    return [val1[0] - val2[0], val1[1] - val2[1]];
+                    // Matrix subtraction
+                    return math.squeeze(math.subtract(matrix1, matrix2)).toArray();
                 case '*':
-                    return [val1[0] * val2[0], val1[1] * val2[1]];
+                    // Dot product for vectors (returns a scalar)
+                    return math.dot(val1, val2);
                 case '/':
-                    if (val2[0] === 0 || val2[1] === 0) {
+                    // Check if any element in val2 is zero
+                    const hasZero = val2.some(value => value === 0);
+                    if (hasZero) {
                         return 'Error: Div by zero in vector';
                     } else {
-                        return [val1[0] / val2[0], val1[1] / val2[1]];
+                        // Element-wise division (kept for backward compatibility)
+                        return math.squeeze(math.dotDivide(matrix1, matrix2)).toArray();
                     }
+                case 'cross':
+                    // Cross product
+                    // For 2D vectors, we'll treat them as 3D with z=0 and return only the z component
+                    const vec1_3d = [val1[0], val1[1], 0];
+                    const vec2_3d = [val2[0], val2[1], 0];
+                    const result = math.cross(vec1_3d, vec2_3d);
+                    return result[2]; // This is a scalar (the z component of the cross product)
+                case 'matmul':
+                    // Matrix multiplication
+                    // For 2D vectors, we'll interpret this as matrix multiply
+                    // Treating vectors as column matrices
+                    return math.multiply(val1, val2);
                 default:
                     return 'Error: Unknown Op';
             }
