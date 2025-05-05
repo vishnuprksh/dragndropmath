@@ -114,6 +114,143 @@ export function setupZoomPan(jsPlumbInstance) {
     workspace.addEventListener('mouseup', endPanning);
     workspace.addEventListener('mouseleave', endPanning);
     
+    // TOUCH EVENTS FOR MOBILE
+    // Variables to track touch events
+    let lastTouchDistance = 0;
+    let isTouchPanning = false;
+    let touchStartX, touchStartY;
+    let touchIdentifier = null;
+
+    // Handle touch start for panning
+    workspace.addEventListener('touchstart', (e) => {
+        // Check if sidebar is expanded on mobile and prevent interactions if so
+        const sidebar = document.querySelector('.sidebar');
+        if (window.innerWidth <= 768 && sidebar && !sidebar.classList.contains('collapsed')) {
+            return;
+        }
+
+        // Pinch-to-zoom: start with two fingers
+        if (e.touches.length === 2) {
+            e.preventDefault();
+            // Calculate initial distance between the two touch points
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            lastTouchDistance = getDistance(touch1, touch2);
+            
+            // Calculate center point for scaling
+            const centerX = (touch1.clientX + touch2.clientX) / 2;
+            const centerY = (touch1.clientY + touch2.clientY) / 2;
+            
+            // Store positions for pinch zoom center
+            touchStartX = centerX;
+            touchStartY = centerY;
+        } 
+        // Single finger pan
+        else if (e.touches.length === 1) {
+            // Allow default behavior for nodes (to drag them)
+            const target = e.target;
+            if (target.classList && (target.classList.contains('node') || 
+                                    target.closest('.node') ||
+                                    target.classList.contains('jtk-endpoint'))) {
+                // If touching a node or endpoint, don't start panning
+                return;
+            }
+            
+            e.preventDefault();
+            isTouchPanning = true;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            touchIdentifier = e.touches[0].identifier;
+        }
+    }, { passive: false });
+
+    // Handle touch move for both pinch-to-zoom and panning
+    workspace.addEventListener('touchmove', (e) => {
+        // Check if sidebar is expanded on mobile
+        const sidebar = document.querySelector('.sidebar');
+        if (window.innerWidth <= 768 && sidebar && !sidebar.classList.contains('collapsed')) {
+            return;
+        }
+
+        // Pinch-to-zoom with two fingers
+        if (e.touches.length === 2) {
+            e.preventDefault();
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            const currentDistance = getDistance(touch1, touch2);
+            
+            // Calculate zoom factor
+            const factor = currentDistance / lastTouchDistance;
+            lastTouchDistance = currentDistance;
+            
+            // Calculate new scale
+            const newScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, scale * factor));
+            
+            // If scale didn't change significantly, exit
+            if (Math.abs(newScale - scale) < 0.01) return;
+            
+            // Calculate center point for scaling
+            const centerX = (touch1.clientX + touch2.clientX) / 2;
+            const centerY = (touch1.clientY + touch2.clientY) / 2;
+            
+            // Get workspace bounds
+            const rect = workspace.getBoundingClientRect();
+            const workspaceCenterX = centerX - rect.left;
+            const workspaceCenterY = centerY - rect.top;
+            
+            // Calculate new translate values to zoom toward center of pinch
+            const dx = workspaceCenterX - translateX;
+            const dy = workspaceCenterY - translateY;
+            const scaleDiff = newScale / scale;
+            translateX = workspaceCenterX - dx * scaleDiff;
+            translateY = workspaceCenterY - dy * scaleDiff;
+            
+            // Update scale
+            scale = newScale;
+            
+            // Apply transform
+            applyTransform();
+            
+            // Update jsPlumb
+            jsPlumbInstance.setZoom(scale);
+        } 
+        // Single finger pan
+        else if (e.touches.length === 1 && isTouchPanning) {
+            e.preventDefault();
+            
+            // Make sure we're tracking the same finger
+            const touch = Array.from(e.touches).find(t => t.identifier === touchIdentifier);
+            if (!touch) return;
+            
+            const dx = touch.clientX - touchStartX;
+            const dy = touch.clientY - touchStartY;
+            
+            translateX += dx;
+            translateY += dy;
+            
+            applyTransform();
+            
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+        }
+    }, { passive: false });
+
+    // Handle touch end
+    workspace.addEventListener('touchend', (e) => {
+        // If no more touches or the tracked finger was lifted
+        if (e.touches.length === 0 || !Array.from(e.touches).some(t => t.identifier === touchIdentifier)) {
+            isTouchPanning = false;
+            touchIdentifier = null;
+        }
+    });
+
+    // Helper function to calculate distance between two touch points
+    function getDistance(touch1, touch2) {
+        const dx = touch1.clientX - touch2.clientX;
+        const dy = touch1.clientY - touch2.clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+    
     // Add keyboard shortcuts for zoom
     document.addEventListener('keydown', (e) => {
         // Only handle if no input is focused
