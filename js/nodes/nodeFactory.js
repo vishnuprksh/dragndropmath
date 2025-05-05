@@ -31,5 +31,22 @@ export function getOperationEndpoints(nodeId, op) {
 }
 
 export function isValidVector(v) {
-    return Array.isArray(v) && v.length === 2 && typeof v[0] === 'number' && typeof v[1] === 'number';
+    // Allow scalar values (like outputs from dot product, cross product)
+    if (typeof v === 'number') {
+        return true;
+    }
+    
+    // Check if it's an array
+    if (!Array.isArray(v)) {
+        return false;
+    }
+    
+    // Recursive function to validate that all elements are numbers or arrays of numbers
+    const validateMatrix = (arr) => {
+        if (!Array.isArray(arr)) return typeof arr === 'number';
+        return arr.every(item => validateMatrix(item));
+    };
+    
+    // Validate the matrix/vector structure
+    return validateMatrix(v);
 }

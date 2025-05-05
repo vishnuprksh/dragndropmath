@@ -23,16 +23,22 @@
 
             <h3 class="text-lg font-medium mt-4 mb-2 text-gray-600">Vector Operations</h3>
             <button data-op="+" class="op-btn bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mb-2 w-full transition duration-150 ease-in-out">
-                Add + (Element-wise)
+                Vector Addition
             </button>
             <button data-op="-" class="op-btn bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mb-2 w-full transition duration-150 ease-in-out">
-                Add - (Element-wise)
+                Vector Subtraction
             </button>
             <button data-op="*" class="op-btn bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mb-2 w-full transition duration-150 ease-in-out">
-                Add * (Element-wise)
+                Dot Product
+            </button>
+            <button data-op="cross" class="op-btn bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mb-2 w-full transition duration-150 ease-in-out">
+                Cross Product
+            </button>
+            <button data-op="matmul" class="op-btn bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mb-2 w-full transition duration-150 ease-in-out">
+                Matrix Multiplication
             </button>
             <button data-op="/" class="op-btn bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mb-2 w-full transition duration-150 ease-in-out">
-                Add / (Element-wise)
+                Element-wise Division
             </button>
 
             <div class="mt-auto pt-4 border-t border-gray-200">
@@ -46,6 +52,56 @@
         </div>
     </div>
 
+    <!-- Edit Node Modal -->
+    <div id="edit-node-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-96 mx-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modal-title" class="text-xl font-semibold text-gray-800">Edit Node</h3>
+                <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Vector Editing Form (shown/hidden based on node type) -->
+            <div id="vector-edit-form" class="hidden">
+                <p class="text-gray-600 mb-3">Enter vector values as [x, y]</p>
+                <input id="vector-value-input" type="text" class="w-full p-2 border border-gray-300 rounded text-lg font-mono mb-4" 
+                       placeholder="[0, 0]">
+                <div class="text-red-500 text-sm mb-4 hidden" id="vector-input-error">Invalid vector format. Please use [x, y] format with numbers.</div>
+            </div>
+            
+            <!-- Operation Editing Form (shown/hidden based on node type) -->
+            <div id="operation-edit-form" class="hidden">
+                <p class="text-gray-600 mb-3">Select operation:</p>
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <button data-op="+" class="modal-op-btn bg-white hover:bg-green-100 text-green-600 font-bold py-2 px-4 rounded border border-green-400">+</button>
+                    <button data-op="-" class="modal-op-btn bg-white hover:bg-green-100 text-green-600 font-bold py-2 px-4 rounded border border-green-400">-</button>
+                    <button data-op="*" class="modal-op-btn bg-white hover:bg-green-100 text-green-600 font-bold py-2 px-4 rounded border border-green-400">·</button>
+                    <button data-op="/" class="modal-op-btn bg-white hover:bg-green-100 text-green-600 font-bold py-2 px-4 rounded border border-green-400">/</button>
+                    <button data-op="cross" class="modal-op-btn bg-white hover:bg-green-100 text-green-600 font-bold py-2 px-4 rounded border border-green-400">×</button>
+                    <button data-op="matmul" class="modal-op-btn bg-white hover:bg-green-100 text-green-600 font-bold py-2 px-4 rounded border border-green-400">⊗</button>
+                </div>
+                <div class="text-amber-600 text-sm mb-4" id="operation-warning">
+                    Changing operation type might require reconnecting endpoints.
+                </div>
+            </div>
+            
+            <div class="flex justify-end">
+                <button id="cancel-edit" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded mr-2">
+                    Cancel
+                </button>
+                <button id="save-edit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import mathjs from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@14.4.0/lib/browser/math.js"></script>
+    
     <!-- Import main.js as a module -->
     <script type="module" src="js/main.js"></script>
 </body>

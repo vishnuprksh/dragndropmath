@@ -60,9 +60,14 @@ export function updateNodeDisplay(nodeId) {
 
     try {
         if (node.type === 'vector') {
-            inputElement.value = (typeof displayValue === 'object' && displayValue !== null)
-                ? JSON.stringify(displayValue)
-                : String(displayValue);
+            // Handle scalar results from dot product and cross product operations
+            if (typeof displayValue === 'number') {
+                inputElement.value = displayValue.toString();
+            } else {
+                inputElement.value = (typeof displayValue === 'object' && displayValue !== null)
+                    ? JSON.stringify(displayValue)
+                    : String(displayValue);
+            }
         } else {
             inputElement.value = (typeof displayValue === 'number' || displayValue === '--' || displayValue === '')
                 ? displayValue

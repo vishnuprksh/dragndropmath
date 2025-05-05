@@ -110,3 +110,29 @@ body {
     box-shadow: 0 0 0 2px #3b82f6, 0 0 8px 2px rgba(59, 130, 246, 0.5);
     z-index: 20; /* Ensure selected node is on top */
 }
+
+/* Modal animation and effects */
+#edit-node-modal {
+    transition: opacity 0.2s ease-in-out;
+    opacity: 0;
+}
+#edit-node-modal.show {
+    opacity: 1;
+}
+#edit-node-modal .bg-white {
+    transform: translateY(20px);
+    transition: transform 0.2s ease-out;
+}
+#edit-node-modal.show .bg-white {
+    transform: translateY(0);
+}
+
+/* Styles for the operation selection buttons */
+.modal-op-btn {
+    transition: all 0.15s ease-in-out;
+}
+.modal-op-btn.selected {
+    background-color: #10b981;
+    color: white;
+    border-color: #10b981;
+}

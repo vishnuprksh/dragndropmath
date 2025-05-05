@@ -88,7 +88,7 @@ function evaluateVectorOperation(node) {
     if (val1 === null || val2 === null) {
         return null;
     } else if (!isValidVector(val1) || !isValidVector(val2)) {
-        return 'Error: Input(s) not vector(s)';
+        return 'Error: Input(s) not valid matrix/vector(s)';
     } else {
         try {
             // Convert arrays to mathjs matrices to use proper matrix operations
@@ -98,40 +98,105 @@ function evaluateVectorOperation(node) {
             switch (node.operation) {
                 case '+':
                     // Matrix addition
-                    return math.squeeze(math.add(matrix1, matrix2)).toArray();
+                    try {
+                        return math.squeeze(math.add(matrix1, matrix2)).toArray();
+                    } catch (e) {
+                        return 'Error: Matrix dimensions must match for addition';
+                    }
                 case '-':
                     // Matrix subtraction
-                    return math.squeeze(math.subtract(matrix1, matrix2)).toArray();
+                    try {
+                        return math.squeeze(math.subtract(matrix1, matrix2)).toArray();
+                    } catch (e) {
+                        return 'Error: Matrix dimensions must match for subtraction';
+                    }
                 case '*':
-                    // Dot product for vectors (returns a scalar)
-                    return math.dot(val1, val2);
+                    // For vectors or matrices:
+                    // If both are 1D vectors of same size, do dot product
+                    // Otherwise, do element-wise multiplication
+                    try {
+                        if (Array.isArray(val1) && Array.isArray(val2) && 
+                            !Array.isArray(val1[0]) && !Array.isArray(val2[0])) {
+                            // 1D vectors - use dot product
+                            return math.dot(val1, val2);
+                        } else {
+                            // Matrices or mixed cases - use element-wise multiplication
+                            return math.squeeze(math.dotMultiply(matrix1, matrix2)).toArray();
+                        }
+                    } catch (e) {
+                        return 'Error: Matrix dimensions must match for element-wise multiplication';
+                    }
                 case '/':
-                    // Check if any element in val2 is zero
-                    const hasZero = val2.some(value => value === 0);
-                    if (hasZero) {
-                        return 'Error: Div by zero in vector';
-                    } else {
-                        // Element-wise division (kept for backward compatibility)
+                    // Element-wise division
+                    try {
+                        // Check if any element in val2 is zero (for flat arrays)
+                        if (Array.isArray(val2) && !Array.isArray(val2[0]) && val2.some(value => value === 0)) {
+                            return 'Error: Division by zero';
+                        }
                         return math.squeeze(math.dotDivide(matrix1, matrix2)).toArray();
+                    } catch (e) {
+                        return 'Error: Matrix dimensions must match for division';
                     }
                 case 'cross':
-                    // Cross product
-                    // For 2D vectors, we'll treat them as 3D with z=0 and return only the z component
-                    const vec1_3d = [val1[0], val1[1], 0];
-                    const vec2_3d = [val2[0], val2[1], 0];
-                    const result = math.cross(vec1_3d, vec2_3d);
-                    return result[2]; // This is a scalar (the z component of the cross product)
+                    // Cross product - only works with 3D vectors
+                    try {
+                        // Prepare vectors for cross product (must be 3D)
+                        let vec1_3d, vec2_3d;
+                        
+                        // Handle different input vector dimensions
+                        if (Array.isArray(val1) && !Array.isArray(val1[0])) {
+                            // Convert to 3D vector if needed
+                            if (val1.length === 2) {
+                                vec1_3d = [val1[0], val1[1], 0];
+                            } else if (val1.length === 3) {
+                                vec1_3d = val1;
+                            } else {
+                                return 'Error: Cross product requires 2D or 3D vectors';
+                            }
+                        } else {
+                            return 'Error: Cross product requires vectors, not matrices';
+                        }
+                        
+                        if (Array.isArray(val2) && !Array.isArray(val2[0])) {
+                            // Convert to 3D vector if needed
+                            if (val2.length === 2) {
+                                vec2_3d = [val2[0], val2[1], 0];
+                            } else if (val2.length === 3) {
+                                vec2_3d = val2;
+                            } else {
+                                return 'Error: Cross product requires 2D or 3D vectors';
+                            }
+                        } else {
+                            return 'Error: Cross product requires vectors, not matrices';
+                        }
+                        
+                        // Calculate cross product
+                        const result = math.cross(vec1_3d, vec2_3d);
+                        
+                        // Return appropriate result based on input dimensions
+                        if (val1.length === 2 && val2.length === 2) {
+                            // For 2D vectors, return just the z component (scalar)
+                            return result[2]; 
+                        } else {
+                            // For 3D vectors, return the full 3D result
+                            return result;
+                        }
+                    } catch (e) {
+                        return 'Error: Cross product calculation failed';
+                    }
                 case 'matmul':
                     // Matrix multiplication
-                    // For 2D vectors, we'll interpret this as matrix multiply
-                    // Treating vectors as column matrices
-                    return math.multiply(val1, val2);
+                    try {
+                        return math.squeeze(math.multiply(matrix1, matrix2)).toArray();
+                    } catch (e) {
+                        return 'Error: Matrix dimensions incompatible for multiplication';
+                    }
                 default:
                     return 'Error: Unknown Op';
             }
         } catch (e) {
             console.error(`Error during vector operation ${node.operation} on node ${node.id}:`, e);
-            return 'Error: Calc Failed';
+            return 'Error: Calculation Failed';
         }
     }
 }
