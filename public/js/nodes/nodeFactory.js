@@ -1,0 +1,166 @@
+// nodeFactory.js - Common functionality for creating nodes
+import { nodes } from '../nodeStore.js';
+import { handleNodeDoubleClick } from '../eventHandlers.js';
+
+export function createNodeElement(id, type, content, initialValue = '', isResult = false, position = null) {
+    // Get the zoom container instead of workspace directly
+    const zoomContainer = document.getElementById('zoom-container');
+    const workspace = document.getElementById('workspace');
+    
+    // Create the node element
+    const node = document.createElement('div');
+    node.id = id;
+    node.dataset.value = initialValue;
+    const typeClass = `node-${type}`;
+    const resultClass = isResult ? 'node-result' : '';
+    node.className = `node ${typeClass} ${resultClass} bg-white p-3 shadow-md min-w-[150px]`;
+    node.innerHTML = content;
+    
+    // Add jigsaw visual elements
+    addJigsawVisuals(node, type, isResult);
+    
+    // Append to the zoom container if it exists, otherwise fallback to workspace
+    (zoomContainer || workspace).appendChild(node);
+    
+    node.addEventListener('dblclick', handleNodeDoubleClick);
+
+    // Add event listener for node title rename (handled by specific elements)
+    setupNodeTitleRename(node);
+
+    if (position) {
+        node.style.left = `${position.x}px`;
+        node.style.top = `${position.y}px`;
+    } else {
+        const nodeCount = Object.keys(nodes).length;
+        node.style.left = `${50 + (nodeCount % 5) * 180}px`;
+        node.style.top = `${50 + Math.floor(nodeCount / 5) * 120}px`;
+    }
+
+    return node;
+}
+
+// Add jigsaw visual elements (tabs and notches) to the node
+function addJigsawVisuals(node, type, isResult) {
+    // All nodes except results have an output tab on the right
+    if (!isResult) {
+        const tab = document.createElement('div');
+        tab.className = 'jigsaw-tab jigsaw-tab-right';
+        node.appendChild(tab);
+        
+        const connector = document.createElement('div');
+        connector.className = 'jigsaw-tab-connector';
+        node.appendChild(connector);
+    }
+
+    // All nodes except initial value nodes (usually) have an input notch on the left
+    // In this app, even value nodes can have inputs (they act as results)
+    if (type === 'operation') {
+        // We'll add notches in getOperationEndpoints since we know the op there
+    } else {
+        // Scalar, Vector, Matrix nodes have 1 input notch
+        const notch = document.createElement('div');
+        notch.className = 'jigsaw-notch jigsaw-notch-left';
+        node.appendChild(notch);
+    }
+}
+
+// Set up event listeners for node title renaming
+function setupNodeTitleRename(nodeElement) {
+    const titleElement = nodeElement.querySelector('.node-title');
+    if (titleElement) {
+        titleElement.addEventListener('dblclick', (event) => {
+            event.stopPropagation(); // Prevent node modal from opening
+            
+            // Create an input element to replace the title
+            const currentTitle = titleElement.textContent;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentTitle;
+            input.className = 'w-full text-center font-semibold text-gray-700 mb-2 p-0 border border-blue-400 focus:outline-none';
+            
+            // Replace the title element with the input
+            titleElement.innerHTML = '';
+            titleElement.appendChild(input);
+            
+            // Focus and select the text
+            input.focus();
+            input.select();
+            
+            // Handle input blur to save the new title
+            input.addEventListener('blur', () => {
+                if (input.value.trim() === '') {
+                    // Don't allow empty titles
+                    titleElement.textContent = currentTitle;
+                } else {
+                    titleElement.textContent = input.value.trim();
+                }
+            });
+            
+            // Handle enter key to save
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    input.blur();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    titleElement.textContent = currentTitle;
+                }
+            });
+        });
+    }
+}
+
+export function getOperationEndpoints(nodeId, op) {
+    const baseUuid = `${nodeId}-${op}`;
+    const nodeElement = document.getElementById(nodeId);
+    
+    // Special case for matrix unary operations that only need one input
+    if (op === 'det' || op === 'transpose') {
+        if (nodeElement) {
+            const notch = document.createElement('div');
+            notch.className = 'jigsaw-notch jigsaw-notch-left';
+            nodeElement.appendChild(notch);
+        }
+        return [
+            { options: { uuid: `${baseUuid}-in1`, anchor: "Left", isTarget: true, maxConnections: 1, cssClass: "target-endpoint" }, params: {} },
+            { options: { uuid: `${baseUuid}-out`, anchor: "Right", isSource: true, maxConnections: 1, cssClass: "source-endpoint" }, params: {} }
+        ];
+    }
+    
+    // Default for binary operations
+    if (nodeElement) {
+        const notchTop = document.createElement('div');
+        notchTop.className = 'jigsaw-notch jigsaw-notch-left jigsaw-notch-top';
+        nodeElement.appendChild(notchTop);
+
+        const notchBottom = document.createElement('div');
+        notchBottom.className = 'jigsaw-notch jigsaw-notch-left jigsaw-notch-bottom';
+        nodeElement.appendChild(notchBottom);
+    }
+    return [
+        { options: { uuid: `${baseUuid}-in1`, anchor: [0, 0.3, -1, 0], isTarget: true, maxConnections: 1, cssClass: "target-endpoint" }, params: {} },
+        { options: { uuid: `${baseUuid}-in2`, anchor: [0, 0.7, -1, 0], isTarget: true, maxConnections: 1, cssClass: "target-endpoint" }, params: {} },
+        { options: { uuid: `${baseUuid}-out`, anchor: "Right", isSource: true, maxConnections: 1, cssClass: "source-endpoint" }, params: {} }
+    ];
+}
+
+export function isValidVector(v) {
+    // Allow scalar values (like outputs from dot product, cross product)
+    if (typeof v === 'number') {
+        return true;
+    }
+    
+    // Check if it's an array
+    if (!Array.isArray(v)) {
+        return false;
+    }
+    
+    // Recursive function to validate that all elements are numbers or arrays of numbers
+    const validateMatrix = (arr) => {
+        if (!Array.isArray(arr)) return typeof arr === 'number';
+        return arr.every(item => validateMatrix(item));
+    };
+    
+    // Validate the matrix/vector structure
+    return validateMatrix(v);
+}
